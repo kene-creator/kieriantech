@@ -1,0 +1,64 @@
+version: '3.4'
+
+services:
+  kerian:
+    image: kerian
+    build:
+      context: .
+      dockerfile: ./apps/kerian/Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 4000:5000
+    depends_on:
+      - rabbitmqKieran
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev kerian
+
+  transaction:
+    build:
+      context: ./
+      dockerfile: ./apps/transaction/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmqKieran
+      - postgres
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev transaction
+
+  rabbitmqKieran:
+    image: rabbitmq:3-management
+    container_name: rabbitmqKieran
+    hostname: rabbitmq
+    volumes:
+      - /var/lib/rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres
+    env_file:
+      - .env
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+
+  postgres_admin:
+    image: dpage/pgadmin4
+    env_file:
+      - .env
+    ports:
+      - '15432:80'
+    depends_on:
+      - postgres
